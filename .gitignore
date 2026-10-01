@@ -1,0 +1,17 @@
+# Python environment made by ./setup.sh
+.venv/
+__pycache__/
+*.pyc
+
+# Downloaded clips (created on first download; VT_CLIPS can move them)
+clips/
+
+# yt-dlp partial downloads
+*.part
+*.ytdl
+
+# OS and editor
+.DS_Store
+.vscode/
+.idea/
+*.code-workspace

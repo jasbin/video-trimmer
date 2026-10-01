@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Video Trimmer</title>
+  <script>
+    // Apply the saved appearance before first paint (no flash of the wrong theme)
+    try { const a = localStorage.getItem('vt-appearance'); if (a === 'light' || a === 'dark') document.documentElement.dataset.theme = a; } catch (_) {}
+  </script>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <h1>Video Trimmer</h1>
+      <p>Download just the part of a video you need.</p>
+    </div>
+    <div class="appearance glass" role="group" aria-label="Appearance">
+      <button type="button" data-appearance="auto" title="Automatic" aria-label="Automatic appearance">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg>
+      </button>
+      <button type="button" data-appearance="light" title="Light" aria-label="Light appearance">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M10 2.2v1.6M10 16.2v1.6M2.2 10h1.6M16.2 10h1.6M4.5 4.5l1.1 1.1M14.4 14.4l1.1 1.1M4.5 15.5l1.1-1.1M14.4 5.6l1.1-1.1"/></g></svg>
+      </button>
+      <button type="button" data-appearance="dark" title="Dark" aria-label="Dark appearance">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M15.8 12.6A6.6 6.6 0 0 1 7.4 4.2a6.6 6.6 0 1 0 8.4 8.4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <div class="column">
+      <h2 class="section-title">Video</h2>
+      <section class="card">
+        <form id="load-form" class="url-row" autocomplete="off">
+          <label class="visually-hidden" for="url">Search YouTube or paste a link</label>
+          <input id="url" class="field url-field" type="search" enterkeyhint="search" autocapitalize="off" spellcheck="false"
+                 placeholder="Search YouTube or paste a link" required>
+          <button id="load" class="btn secondary" type="submit">Search</button>
+        </form>
+        <p id="load-error" class="error" hidden></p>
+        <ul id="results" class="results" hidden></ul>
+        <div id="info" class="info" hidden>
+          <div class="player-frame"><div id="player"></div><img id="thumb" alt="" hidden>
+            <p id="preview-note" class="preview-note" hidden>The owner doesn't allow playback here, so preview and
+              “Set to now” are off. Trimming still works — set the times by hand.</p>
+          </div>
+          <div class="info-text">
+            <p id="title" class="info-title"></p>
+            <p id="meta" class="info-meta"></p>
+          </div>
+          <button type="button" id="back" class="btn secondary small back" hidden>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to results
+          </button>
+        </div>
+      </section>
+
+      <div id="editor" class="editor disabled" aria-disabled="true">
+        <h2 class="section-title">Section</h2>
+        <section class="card" id="section-card">
+          <div class="span-row">
+            <div class="segmented" id="span" role="radiogroup" aria-label="What to download">
+              <button type="button" role="radio" data-value="part" aria-checked="true">Section</button>
+              <button type="button" role="radio" data-value="full" aria-checked="false">Whole video</button>
+            </div>
+            <span class="hint" id="span-hint"></span>
+          </div>
+          <div class="section-controls" id="section-controls">
+          <div class="range" id="range">
+            <div class="range-track"><div class="range-fill" id="range-fill"></div></div>
+            <input id="range-start" type="range" min="0" max="100" step="0.1" value="0" aria-label="Start">
+            <input id="range-end" type="range" min="0" max="100" step="0.1" value="100" aria-label="End">
+          </div>
+          <div class="times">
+            <div class="time">
+              <label for="start">Start</label>
+              <input id="start" class="field time-field" value="0:00" inputmode="decimal">
+              <button type="button" class="btn secondary small yt-only" data-set="start">Set to now</button>
+            </div>
+            <div class="length"><span>Length</span><b id="length">0:00</b></div>
+            <div class="time">
+              <label for="end">End</label>
+              <input id="end" class="field time-field" value="0:00" inputmode="decimal">
+              <button type="button" class="btn secondary small yt-only" data-set="end">Set to now</button>
+            </div>
+          </div>
+          <button type="button" id="preview" class="btn secondary yt-only preview">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5v9l7-4.5z" fill="currentColor"/></svg>Preview section
+          </button>
+          </div>
+        </section>
+
+        <h2 class="section-title">Options</h2>
+        <section class="card options">
+          <div class="option">
+            <span class="option-label">Save as</span>
+            <div class="segmented" id="kind" role="radiogroup" aria-label="Save as">
+              <button type="button" role="radio" data-value="video" aria-checked="true">Video</button>
+              <button type="button" role="radio" data-value="audio" aria-checked="false">Audio</button>
+            </div>
+          </div>
+          <div class="option" id="quality-row">
+            <span class="option-label">Quality</span>
+            <div class="segmented" id="quality" role="radiogroup" aria-label="Quality">
+              <button type="button" role="radio" data-value="" aria-checked="true">Best</button>
+              <button type="button" role="radio" data-value="1080" aria-checked="false">1080p</button>
+              <button type="button" role="radio" data-value="720" aria-checked="false">720p</button>
+              <button type="button" role="radio" data-value="480" aria-checked="false">480p</button>
+            </div>
+          </div>
+          <label class="option switch-row" id="precise-row">
+            <span>
+              <span class="option-label">Precise cut</span>
+              <span class="hint">Frame-accurate, but slower. Off: cuts snap to the nearest keyframe.</span>
+            </span>
+            <input type="checkbox" id="precise" class="switch">
+          </label>
+        </section>
+
+        <button id="trim" class="btn primary" type="button">Trim clip</button>
+      </div>
+    </div>
+
+    <aside class="column panel">
+      <h2 class="section-title">Result</h2>
+      <section class="card" id="result">
+        <div id="empty" class="empty">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM5 8h14M5 16h14M9 4v4M15 4v4M9 16v4M15 16v4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          <b>No clip yet</b>
+          <span>Load a video, pick a section, then Trim clip.</span>
+        </div>
+        <div id="progress" class="progress" hidden>
+          <div class="progress-top"><b id="stage">Starting</b><span id="elapsed">0s</span></div>
+          <div class="progress-track"><div class="progress-fill indeterminate" id="progress-fill"></div></div>
+        </div>
+        <div id="output" hidden>
+          <div id="media"></div>
+          <p id="output-name" class="output-name"></p>
+          <a id="download" class="btn secondary download" href="#">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8M4.8 6.8L8 10l3.2-3.2M2.5 11.5v1.5h11v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Download
+          </a>
+        </div>
+        <p id="trim-error" class="error" hidden></p>
+      </section>
+
+      <h2 class="section-title">Clips</h2>
+      <section class="card list-card">
+        <ul id="clips" class="list"></ul>
+        <p id="clips-empty" class="hint list-empty">Trimmed clips appear here.</p>
+      </section>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

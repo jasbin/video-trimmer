@@ -1,0 +1,6 @@
+# yt-dlp is the maintained fork of youtube-dl. The [default] extras bundle certifi (needed for HTTPS with
+# python.org builds of Python on macOS), plus brotli/websockets/requests that yt-dlp uses for YouTube.
+yt-dlp[default]
+# Web UI (server.py)
+fastapi
+uvicorn[standard]
